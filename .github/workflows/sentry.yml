@@ -1,0 +1,25 @@
+name: Runbox7 Sentry Source Maps
+
+# TODO: only on push master
+on: [push]
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions/setup-node@v1
+              with:
+                node-version: '16.x'
+            - uses: actions/cache@v2
+              with:
+                  path: ~/.npm
+                  key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+                  restore-keys: |
+                      ${{ runner.os }}-node-
+            - run: npm ci
+            - run: npm install @sentry/cli
+            # FIXME: SENTRY_DSN needs to be set
+            - run: npm run build
+            - run: ./node_modules/.bin/sentry-cli sourcemaps inject dist/
+            - run: ./node_modules/.bin/sentry-cli sourcemaps upload dist/
